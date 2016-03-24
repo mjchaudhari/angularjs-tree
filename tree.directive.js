@@ -11,21 +11,21 @@
                 '<span ng-style="{\'margin-left\': 20*n.__level}" >',
                   '<span ng-if="!n.__isLeaf && !n.__isExpanded"  >',
                     '<span ng-if="n.__hasChildren" ng-click="toggleNodeVisibility(n,$event)" style="margine-right:2px;" class="handCursor tree-toggler tree-toggler-right glyphicon glyphicon-chevron-right "></span>',
-                    '<span ng-if="!n.__hasChildren" style="margine-right:2px;" class="handCursor tree-toggler tree-toggler-right glyphicon glyphicon-minus "></span>',
+                    '<span ng-if="!n.__hasChildren" class="handCursor tree-toggler tree-toggler-right  icon-blank"></span>',
                     '<span ng-click="toggleSelection(n,$event)" class="handCursor mdi-file-folder mdi-action-view-module glyphicon glyphicon-folder-close"></span>',
                   '</span>',
                   '<span ng-if="!n.__isLeaf && n.__isExpanded"  >',
                     '<span  ng-if="n.__hasChildren" ng-click="toggleNodeVisibility(n,$event)" style="margine-right:2px;" class="handCursor tree-toggler tree-toggler-down glyphicon glyphicon-chevron-down"></span>',
-                    '<span ng-if="!n.__hasChildren" style="margine-right:2px;" class="handCursor tree-toggler tree-toggler-right glyphicon glyphicon-minus "></span>',
+                    '<span ng-if="!n.__hasChildren" style="margin-right:2px;" class="handCursor tree-toggler tree-toggler-right  icon-blank"></span>',
                     '<span ng-click="toggleSelection(n,$event)" class="handCursor mdi-file-folder-open mdi-action-view-module glyphicon glyphicon-folder-open"></span>',
                   '</span>',
                   '<span ng-if="n.__isLeaf"  >',
-                    '<span ng-if="!n.__hasChildren" style="margine-right:2px;" class="handCursor tree-toggler tree-toggler-right glyphicon glyphicon-minus "></span>',
+                    '<span ng-if="!n.__hasChildren" class="handCursor tree-toggler tree-toggler-right icon-blank "></span>',
                     '<span ng-click="toggleSelection(n,$event)" class="handCursor mdi-file mdi-action-view-module glyphicon glyphicon-file"></span>',
                   '</span>',
                 '</span> ',
                 //'<div style=" background-color:red;" ng-click="toggleSelection(n,$event)"> ',
-                    '<span class="handCursor" ng-click="toggleSelection(n,$event)">{{n.Name}}</span>',
+                    '<span class="handCursor" ng-click="toggleSelection(n,$event)">{{n[options.nameAttrib]}}</span>',
                 //'</div>',  
               '</div>',
             '</li>',
@@ -44,39 +44,50 @@
           tree: '=',
           onSelect: '=',
           selectedNodes: '=',
-          allowMultiSelect: '='
+          allowMultiSelect: '=',
+          options:'='
         },
         //controller start
         controller: ["$scope", function ($scope) {
-          $scope.title = "Tree";
-          var options = {
-            idAttrib : "Id",
-            nameAttrib :"Name",
-            childrenAttrib : "Children"
+            $scope.title = "";
+            var options = {
+                idAttrib: "Id",
+                nameAttrib: "Name",
+                childrenAttrib: "Children"
 
-          };
+            };
           
-          var init = function(){
-            
-           $scope.flatTree = [];
-           if($scope.tree){
-               var dupNode = angular.copy($scope.tree);
-               dupNode.__level = 0;
-               dupNode.__isHidden = false;
-               dupNode.__isExpanded = false;
-               dupNode.__isSelected = true;
-               dupNode.__hasChildren = true;
-               dupNode.__isLeaf = false;
+            var init = function(){
+                if($scope.options){
+                    options = {
+                        idAttrib        : $scope.options.idAttrib,
+                        nameAttrib      :$scope.options.nameAttrib,
+                        childrenAttrib  : $scope.options.childrenAttrib
+                    };
 
-               dupNode[options.childrenAttrib] = null;
-               
-               $scope.flatTree.push(dupNode);
-               var tree =  flattenTree($scope.tree); 
-               var arr=$scope.flatTree.concat(tree);
-               angular.copy(arr,$scope.flatTree);
-               //expand first node
-               expand(dupNode);
-           }
+                }
+                else{
+                    $scope.options = options;
+                }
+                $scope.flatTree = [];
+                if($scope.tree){
+                    var dupNode = angular.copy($scope.tree);
+                    dupNode.__level = 0;
+                    dupNode.__isHidden = false;
+                    dupNode.__isExpanded = false;
+                    dupNode.__isSelected = true;
+                    dupNode.__hasChildren = true;
+                    dupNode.__isLeaf = false;
+
+                    dupNode[options.childrenAttrib] = null;
+
+                    $scope.flatTree.push(dupNode);
+                    var tree =  flattenTree($scope.tree); 
+                    var arr=$scope.flatTree.concat(tree);
+                    angular.copy(arr,$scope.flatTree);
+                    //expand first node
+                    expand(dupNode);
+                }
           }
           
           
@@ -90,9 +101,6 @@
             node.__isleaf = true
             if(node[options.childrenAttrib])
             {
-               
-
-                      
               node[options.childrenAttrib].forEach(function(n){
                 node.__hasChildren = true;
                 //make copy of this node because we are gng to remove the 
@@ -103,7 +111,7 @@
                 nd.__isHidden = true;
                 nd.__isExpanded = false;
                 nd.__isSelected = false;
-                nd.__parent = node.Id;
+                nd.__parent = node[options.idAttrib];
                 nd.__level = n.__level;
 
                 nd.__hasChildren = false;
@@ -184,6 +192,9 @@
                 node.__isHidden = false;
                 //since th4 parent is expanded ensure all its children also visible
                 var c = getChildren(node);
+                if(c == null){
+                    return;
+                }
                 c.forEach(function(chld){
                         chld.__isHidden =false;
                 });
@@ -295,7 +306,7 @@
             {
                     //alert('selected changed');
               var ids =  [];
-              if(angular.isArray(newValue)){
+              if(angular.isArray(newValue) ){
 
               
                       for(var i=0;i<newValue.length;i++){
@@ -314,6 +325,7 @@
                         ids.push(val.toString());
                       }
               }
+              
 
               if($scope.flatTree)
               {
