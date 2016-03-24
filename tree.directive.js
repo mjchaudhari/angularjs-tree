@@ -2,7 +2,7 @@
   
   var module = angular.module('ezDirectives', []);
   this.template = [
-    '<div>{{title}}' ,
+    '<div>{{title}} ',
         '<ul style="list-style-type:none;">',
           '<div ng-repeat="n in flatTree">',
             '<li  class="node" ng-if="!n.__isHidden"',
@@ -34,11 +34,43 @@
       '</div>',
     ].join('\n');
     
+    this.materialTemplate = [
+    '<div>{{title}} ',
+        '<ul style="list-style-type:none;">',
+          '<div ng-repeat="n in flatTree">',
+            '<li  class="node" ng-if="!n.__isHidden"',
+                'ng-class=" { \'node-selected\':n.__isSelected, \'node-unselected\': !n.__isSelected}">',
+              '<div style="width:100%;">',
+                '<span ng-style="{\'margin-left\': 20*n.__level}" >',
+                  '<span ng-if="!n.__isLeaf && !n.__isExpanded"  >',
+                    '<md-button aria-label="More" ng-if="n.__hasChildren" ng-click="toggleNodeVisibility(n,$event)" style="margine-right:2px;" class="handCursor tree-toggler  tree-toggler-right glyphicon glyphicon-chevron-right md-icon-button"><i class="material-icons">play_arrow</i></md-button>',
+                    '<span ng-if="!n.__hasChildren" class="handCursor tree-toggler tree-toggler-right  icon-blank"></span>',
+                    '<span ng-click="toggleSelection(n,$event)" class="handCursor mdi-file-folder mdi-action-view-module glyphicon glyphicon-folder-close"><i class="material-icons">folder</i></span>',
+                  '</span>',
+                  '<span ng-if="!n.__isLeaf && n.__isExpanded"  >',
+                    '<span  ng-if="n.__hasChildren" ng-click="toggleNodeVisibility(n,$event)" style="margine-right:2px;" class="handCursor tree-toggler tree-toggler-down glyphicon glyphicon-chevron-down"><i class="material-icons">arrow_drop_down</i></span>',
+                    '<span ng-if="!n.__hasChildren" style="margin-right:2px;" class="handCursor tree-toggler tree-toggler-right  icon-blank"></span>',
+                    '<span ng-click="toggleSelection(n,$event)" class="handCursor mdi-file-folder-open mdi-action-view-module glyphicon glyphicon-folder-open"><i class="material-icons">folder_open</i></span>',
+                  '</span>',
+                  '<span ng-if="n.__isLeaf"  >',
+                    '<span ng-if="!n.__hasChildren" class="handCursor tree-toggler tree-toggler-right icon-blank "></span>',
+                    '<span ng-click="toggleSelection(n,$event)" class="handCursor mdi-file mdi-action-view-module glyphicon glyphicon-file"><i class="material-icons">group</i></span>',
+                  '</span>',
+                '</span> ',
+                //'<div style=" background-color:red;" ng-click="toggleSelection(n,$event)"> ',
+                    '<span class="handCursor" ng-click="toggleSelection(n,$event)">{{n[options.nameAttrib]}}</span>',
+                //'</div>',  
+              '</div>',
+            '</li>',
+          '</div>',
+        '</ul>',
+      '</div>',
+    ].join('\n');
   module.directive('ezTree', [
     '$timeout', function($timeout) {
       return {
         restrict: 'AE',
-        template: this.template,
+        template: this.materialTemplate,
         replace: true,
         scope: {
           tree: '=',
@@ -99,7 +131,7 @@
                 node.__level = 0;
             }
             node.__isleaf = true
-            if(node[options.childrenAttrib])
+            if(node[options.childrenAttrib] && angular.isArray(node[options.childrenAttrib]))
             {
               node[options.childrenAttrib].forEach(function(n){
                 node.__hasChildren = true;
@@ -242,7 +274,7 @@
           var getChildren = function(node){
             var children = null;
             $scope.flatTree.forEach(function(n){
-              if(n.__parent && n.__parent == node[options.idAttrib] ){
+              if(n.__parent != null && n.__parent == node[options.idAttrib] ){
 
                   if(children == null){
                       children = [];
